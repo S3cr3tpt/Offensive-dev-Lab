@@ -15,8 +15,7 @@ It uses **Preprocessor Directives** to detect the Operating System at compile ti
 **Requirement:** MinGW or Visual Studio.
 **Command:**
 ```bash
-gcc src/main.c -o build/agent.exe -lws2_32
-
+x86_64-w64-mingw32-gcc src/implant.c -o bin/implant.exe -lws2_32
 ```
 
 *Note: The `-lws2_32` flag links the Windows Socket library.*
