@@ -18,7 +18,7 @@ This repository documents my journey into low-level systems programming and netw
 * **Key Concept:** Understanding the TCP 3-Way Handshake and the `send()`/`recv()` synchronization loop.
 
 ### [Stage 2: Threaded "Lobby" Architecture](./Stage2_Threaded)
-* **Status:** 🚧 In Progress
+* **Status:** ✅ Complete
 * **Architecture:** Multi-Threaded / Concurrent Handling
 * **Description:** upgrading the "Brain" to handle multiple simultaneous connections.
     * **Session Management:** Using Python `threading` to manage a "Lobby" of active bots.
