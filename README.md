@@ -1,45 +1,44 @@
-# Offensive Development Research Lab
+# Offensive Development & C2 Engineering Lab
 
-> **Status:** Active Research  
-> **Operator:** S3cr3tpt
+### 🛡️ Project Goal
+This repository documents my journey into low-level systems programming and network security. The goal is to reverse-engineer standard malware architectures to understand how Command & Control (C2) infrastructures function, how they are detected, and how to defend against them.
 
-## 🏴rw Mission Statement
-This repository serves as a central archive for research into **Offensive Security Architecture**, **Windows Internals**, and **Malware Development**. 
-
-The primary objective is to move beyond "script-kidding" and utilizing pre-made tools, focusing instead on the **Deep Understanding** of underlying technologies, including:
-* **Memory Management & Manipulation**
-* **Win32 API & Native API (Nt/Zw)**
-* **Socket Programming & C2 Protocol Design**
-* **Anti-Analysis & Evasion Techniques**
-
-## 📂 Laboratory Architecture
-This repository is structured as a collection of independent modules. Each directory represents a standalone project or research unit with its own documentation and build instructions.
-
-The research is generally divided into the following domains:
-
-### 1. Implants & Payloads
-Custom-written agents designed for execution on target systems. Focus on lightweight, native languages (C/C++/Assembly) to minimize dependencies and evade detection.
-* *Scope:* Shellcode generation, beacons, droppers.
-
-### 2. Infrastructure & C2
-Server-side logic and listening posts. Development of Command & Control frameworks to handle connections, tasking, and exfiltration.
-* *Scope:* Python listeners, team servers, protocol handlers.
-
-### 3. Internals & Prototypes
-Experiments with OS-level mechanics. These are often Proof-of-Concepts (PoCs) used to test specific theories before integration into main tools.
-* *Scope:* Process injection, API hooking, persistence mechanisms.
+**Current Focus:** Custom C2 protocols, Socket Programming (C/Python), and Concurrency.
 
 ---
 
-## 🛠 Technology Stack
-* **Languages:** C (Win32), C++, Python 3, x64 Assembly.
-* **Compilers:** GCC (MinGW-w64), MSVC.
-* **Tools:** GDB, x64dbg, Wireshark, Netcat.
+## 📂 Project Structure
 
-## ⚠️ Legal & Ethical Disclaimer
-**This repository is for Academic and Educational purposes only.**
+### [Stage 1: Synchronous C2 Infrastructure](./Stage1_Basic)
+* **Status:** ✅ Complete
+* **Architecture:** Single-Client / Blocking I/O
+* **Description:** A foundational implementation of a C2 listener and implant.
+    * **Implant (C):** Cross-platform (Linux/Windows), stealth execution, output redirection.
+    * **Server (Python):** Basic command handling and response parsing.
+* **Key Concept:** Understanding the TCP 3-Way Handshake and the `send()`/`recv()` synchronization loop.
 
-The code provided herein is intended to demonstrate the mechanics of offensive security for the purpose of learning **Defense through Offense**. All experiments are conducted in isolated, private lab environments (VMs) with explicit authorization.
+### [Stage 2: Threaded "Lobby" Architecture](./Stage2_Threaded)
+* **Status:** 🚧 In Progress
+* **Architecture:** Multi-Threaded / Concurrent Handling
+* **Description:** upgrading the "Brain" to handle multiple simultaneous connections.
+    * **Session Management:** Using Python `threading` to manage a "Lobby" of active bots.
+    * **UX:** Dynamic switching between targets (`use <id>`, `background`).
+* **Key Concept:** Concurrency, Race Conditions, and Shared Memory management.
 
-* Do not use this code on systems you do not own or have explicit permission to test.
-* The author takes no responsibility for the misuse of the information provided in this repository.
+---
+
+## 🧠 Skills Matrix
+
+| Skill | Usage in Project |
+| :--- | :--- |
+| **C Programming** | Memory management, Process execution (`popen`), Socket API |
+| **Python** | Rapid prototyping, Threading, String manipulation |
+| **Networking** | TCP/IP flow control, Port handling, Endianness (`htons`) |
+| **OS Internals** | Standard I/O streams (`stdout`/`stderr`), Process pipes |
+| **Cross-Compilation** | Building Windows Executables (`.exe`) from Linux (MinGW) |
+
+---
+
+## ⚠️ Disclaimer
+**Educational Use Only.**
+This code is written for research and security training. It is designed to be run in isolated lab environments. I am not responsible for misuse of this code.

