@@ -65,11 +65,19 @@ def interact_session(target_id):
 
             # Send Command
             target_client.send(command.encode())
-            
-            # Receive Response
-            # For now, we read a big chunk. 
-            response = target_client.recv(8192).decode()
-            print(response)
+            # Wait for the full response
+            full_response = ""
+            while True:
+                try:
+                    chunk = target_client.recv(4096).decode()
+                    full_response += chunk
+                    if "<END>" in full_response:
+                        break
+                except Exception as e:
+                    print(f"[-] Error receiving data: {e}")
+                    break
+
+            print(full_response.replace("<END>", ""))
 
     except KeyError:
         print("[-] Session ID not found.")

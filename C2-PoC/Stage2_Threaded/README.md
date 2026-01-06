@@ -1,81 +1,82 @@
-# Stage 2: Multi-Threaded C2 "The Lobby"
+# Stage 2.5: Multi-Threaded C2 with Persistent Shell
 
 ## 📖 Overview
-Stage 2 evolves the C2 infrastructure from a synchronous, single-client model to a **Concurrent Multi-Client System**. 
-It utilizes a "Lobby" architecture where the listener runs in a background thread, allowing the main operator thread to manage multiple active sessions simultaneously without blocking.
+Stage 2 evolves the C2 infrastructure from a simple connection into a **Concurrent Multi-Client System** with a stable, persistent shell environment. 
+It utilizes a "Lobby" architecture where the listener runs in a background thread, while the main thread manages active sessions.
 
 * **Architecture:** Asynchronous / Multi-Threaded
-* **Handling:** Concurrent connections (Python `threading`)
-* **State Management:** Global Shared Dictionary (`ALL_CLIENTS`)
+* **Protocol:** Custom TCP with `<END>` delimiter for stability.
+* **Shell Type:** Persistent (Supports `cd` and state retention).
 
 ## ⚡ Key Features
-* **Background Listener:** A daemon thread that perpetually accepts new connections and performs the initial handshake (OS detection) without interrupting the operator.
+* **Background Listener:** A daemon thread that perpetually accepts new connections without blocking the operator.
+* **Persistent Shell:** * Implemented **Internal Command Handling** for `cd`. The implant modifies its own working directory using the C `chdir()` API, allowing users to navigate the file system permanently.
+* **Stable Data Exfiltration:**
+    * Uses a custom **`<END>` marker protocol** to ensure large outputs (like `ls -la` or `netstat`) are received completely before the prompt returns.
+    * Solves the "fragmentation lag" issue found in raw socket implementations.
 * **Session Management:**
     * **List:** View all active agents in the "Lobby".
-    * **Interact:** Switch focus to a specific agent (`use <id>`) to send commands.
-    * **Background:** Return to the lobby (`back`) while keeping the agent connection alive.
-* **Auto-Pruning:** Automatically cleans up dead sessions if a connection error occurs.
+    * **Interact:** Switch focus to a specific agent (`use <id>`).
+    * **Auto-Pruning:** Automatically cleans up dead sessions.
 
 ---
 
 ## 🛠️ Usage
 
-### 1. Start the Multi-Threaded Server
+### 1. Start the Server (Python)
 ```bash
 # Usage: python3 server.py <IP> <PORT>
-# Default: 0.0.0.0 8000
 python3 server.py
 
 ```
 
-* **Note:** The server prompt `C2_Lobby >` will remain active even while new bots connect in the background.
+### 2. Connect Agents (C Implant)
 
-### 2. Connect Agents (Implants)
-
-Run the implant on multiple target machines (or multiple terminal tabs).
+Compile and run the implant on the target:
 
 ```bash
-./implant
+# Windows (Mingw)
+x86_64-w64-mingw32-gcc implant.c -o implant.exe -lws2_32
+
+# Linux (GCC)
+gcc implant.c -o implant
 
 ```
 
-* The server will notify: `[+] New Bot Connected: ID 0 | IP: 127.0.0.1 | OS: LINUX`
-
-### 3. Operator Commands (The Lobby)
+### 3. Operator Commands
 
 | Command | Description |
 | --- | --- |
-| `list` | Displays table of all active connections (ID, IP, OS). |
-| `use <id>` | Enter interactive shell with specific Bot ID (e.g., `use 0`). |
-| `exit` | Shutdown the server and all threads. |
+| `list` | Displays table of all active connections. |
+| `use <id>` | Enter interactive shell with a specific Bot. |
+| `exit` | Shutdown the server. |
 
-### 4. Session Commands (Inside a Bot)
+### 4. Interactive Shell Commands
 
 | Command | Description |
 | --- | --- |
+| `cd <path>` | **New:** Changes the directory on the remote machine persistently. |
 | `back` | Return to main lobby (Session stays alive). |
-| `exit` | Kill this specific bot and remove from list. |
-| `*` | Any other command is sent to the target shell (e.g., `ls`, `whoami`). |
+| `exit` | Kill this specific bot. |
+| `*` | Any other command is executed via `popen`. |
 
 ---
 
 ## 🧠 Technical Implementation
 
-### The Concurrency Model
+### 1. The "Interceptor" Logic (Implant)
 
-The server uses Python's `threading` library to split duties:
+The C implant uses an interceptor pattern to handle state-changing commands:
 
-1. **Thread A (Daemon):** Runs `listener_handler()`. It loops on `server.accept()`. When a client connects, it performs a blocking `recv()` to get the OS info, registers the client in the `ALL_CLIENTS` dictionary, and immediately goes back to listening.
-2. **Thread B (Main):** Runs `main_menu()`. It handles user input. Since Python's `input()` is blocking, this thread does nothing until the operator types.
+* **Incoming Command:** Checked against internal keywords (e.g., `cd`).
+* **If `cd`:** Executed via `_chdir()`/`chdir()` to modify the process environment.
+* **If other:** Passed to `popen()` for system execution.
 
-### Data Structure
+### 2. The "Over" Protocol (Server)
 
-Active sessions are stored in a global dictionary for O(1) access:
+To prevent TCP fragmentation issues, the server implements a dynamic receive loop:
 
-```python
-ALL_CLIENTS = {
-    0: [socket_obj, ("127.0.0.1", 4444), "LINUX"],
-    1: [socket_obj, ("192.168.1.5", 5555), "WINDOWS"]
-}
+* The server listens for data chunks continuously until it detects the specific `<END>` marker sent by the implant.
+* This ensures that long outputs are fully captured before the operator is prompted for the next command.
 
 ```

