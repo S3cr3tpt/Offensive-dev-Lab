@@ -79,4 +79,3 @@ To prevent TCP fragmentation issues, the server implements a dynamic receive loo
 * The server listens for data chunks continuously until it detects the specific `<END>` marker sent by the implant.
 * This ensures that long outputs are fully captured before the operator is prompted for the next command.
 
-```
